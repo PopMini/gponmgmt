@@ -35,7 +35,7 @@ class olt():
 		self.oltip = oltip
 		self.snmpCommunity = snmpCommunity
 		self.activeOlt= self.getActiveOltID() # Get active gpon interfaces
-		self.getOnuInfo()
+		
 
 	def getActiveOltID(self):
 		self.oltids = netsnmp.snmpwalk(self.sleGponOltId, Version=2, DestHost=self.oltip, Community=self.snmpCommunity)
