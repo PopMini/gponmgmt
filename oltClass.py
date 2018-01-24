@@ -1,6 +1,8 @@
 import netsnmp,os,subprocess
+from database import databaseInterface
 def prettify(mac_string):
     return ':'.join('%02x' % ord(b) for b in mac_string)
+dbase = databaseInterface('localhost','root','','gpon')
 class olt():
 	global dbase
 	sleGponOnuID='.1.3.6.1.4.1.6296.101.23.3.1.1.1'#
@@ -121,20 +123,28 @@ class olt():
 		print "IP Address (after request):",ipaddr
 		return ipaddr
 	def getMacAddressTable(self,oltid,onuid,model):
-		#if 'h665' not in model.lower():
-		#	pass
-		FNULL = open(os.devnull, 'w')
-		macAddressTable = []
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlRequest,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOltIndex,'i',oltid],stdout=FNULL, stderr=subprocess.STDOUT)
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOnuIndex,'i',onuid],stdout=FNULL, stderr=subprocess.STDOUT)
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlSlotIndex,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlPortIndex,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlTimer,'i','0'],stdout=FNULL, stderr=subprocess.STDOUT)
 		slotindex=1
 		portindex=1
-		macAddrOID = ".1.3.6.1.4.1.6296.101.23.19.1.1.4.{}.{}.{}.{}.2".format(oltid,onuid, slotindex,portindex)
-		macaddr = netsnmp.snmpwalk(".1.3.6.1.4.1.6296.101.23.19.1.1.4.{}.{}.{}.{}".format(oltid,onuid, slotindex,portindex),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
+		macAddressTable = []
+		FNULL = open(os.devnull, 'w')
+
+		if 'h665' not in model.lower():
+			for i in range(1,4):
+				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlRequest,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
+				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOltIndex,'i',oltid],stdout=FNULL, stderr=subprocess.STDOUT)
+				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOnuIndex,'i',onuid],stdout=FNULL, stderr=subprocess.STDOUT)
+				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlSlotIndex,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
+				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlPortIndex,'i',str(i)],stdout=FNULL, stderr=subprocess.STDOUT)
+				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlTimer,'i','0'],stdout=FNULL, stderr=subprocess.STDOUT)
+			macaddr = netsnmp.snmpwalk(".1.3.6.1.4.1.6296.101.23.19.1.1.4.{}.{}.{}".format(oltid,onuid, slotindex),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
+		else:
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlRequest,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOltIndex,'i',oltid],stdout=FNULL, stderr=subprocess.STDOUT)
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOnuIndex,'i',onuid],stdout=FNULL, stderr=subprocess.STDOUT)
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlSlotIndex,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlPortIndex,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlTimer,'i','0'],stdout=FNULL, stderr=subprocess.STDOUT)
+			macaddr = netsnmp.snmpwalk(".1.3.6.1.4.1.6296.101.23.19.1.1.4.{}.{}.{}.{}".format(oltid,onuid, slotindex,portindex),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
 		for i in macaddr:
 			macAddressTable.append(prettify(i))
 
