@@ -50,7 +50,10 @@ class olt():
 				activeOlt.append(self.oltids[i])
 		return activeOlt
 
-	def getOnuInfo(self):
+	def getOnuInfo(self,oltid=None):
+		if oltid!=None:
+			self.activeOlt = []
+			self.activeOlt.append(oltid)
 		for oltid in self.activeOlt:
 			Serial = netsnmp.snmpwalk(self.sleGponOnuSerial+"."+oltid, Version=2, DestHost=self.oltip, Community=self.snmpCommunity)
 			RxPower = netsnmp.snmpwalk(self.sleGponOnuRxPower+"."+oltid, Version=2, DestHost=self.oltip, Community=self.snmpCommunity)
@@ -61,11 +64,11 @@ class olt():
 			Model = netsnmp.snmpwalk(self.sleGponOnuModelName+"."+oltid,Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
 			
 			for i in range (0,len(Serial)):
-				#print Serial[i], RxPower[i], OnuID[i], Status[i], Profile[i], Distance[i], Model[i], oltid
+				print Serial[i], RxPower[i], OnuID[i], Status[i], Profile[i], Distance[i], Model[i], oltid
 				ipaddr = self.getIpAddress(oltid, OnuID[i], Model[i],Profile[i])
 				if not Model[i] or not Profile[i]:
 					continue
-				if 'h665' not in Model[i].lower() and "bridge" not in Profile[i].lower():
+				if 'h665' not in Model[i].lower() and "bridge" not in Profile[i].lower() and "KISSJAMES" not in Profile[i]:
 					try:
 						ipAddrRo,macAddress = self.getRouterAddress(oltid,OnuID[i])
 						macAddressTable=[macAddress]
@@ -92,18 +95,19 @@ class olt():
 					continue
 
 	def getRouterAddress(self,oltid,onuid):
-		print "getRouterAddress"
+		
 		FNULL = open(os.devnull, 'w')
 		for i in range(2,7):
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlRequest,'i','2'],stdout=FNULL, stderr=subprocess.STDOUT)
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOltId,'i',oltid],stdout=FNULL, stderr=subprocess.STDOUT)
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOnuId,'i',onuid],stdout=FNULL, stderr=subprocess.STDOUT)
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlId,'i',str(i)],stdout=FNULL, stderr=subprocess.STDOUT)
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlTimer,'i','0'],stdout=FNULL, stderr=subprocess.STDOUT)
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlRequest,'i','2'])
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOltId,'i',oltid])
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOnuId,'i',onuid])
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlId,'i',str(i)])
+			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlTimer,'i','0'])
 			ipaddrRo = netsnmp.snmpget(".1.3.6.1.4.1.6296.101.23.12.1.1.13."+oltid+"."+onuid+"."+str(i),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
 			if ipaddrRo[0] != '0.0.0.0':
 				macaddr = netsnmp.snmpget(".1.3.6.1.4.1.6296.101.23.12.1.1.10."+oltid+"."+onuid+"."+str(i),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
 				if macaddr[0]:
+					print "[{}] ROUTER IP {} MAC {}".format(self.oltip,ipaddrRo[0],prettify(macaddr[0]))
 					return ipaddrRo[0],prettify(macaddr[0])
 				else:
 					return None, None
@@ -113,41 +117,43 @@ class olt():
 		#	print ipaddr, "IP Address is valid"
 		#	return ipaddr
 		FNULL = open(os.devnull, 'w') # Don't print output from snmpset
-		print "Refreshing..."
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlRequest,'i','2'],stdout=FNULL, stderr=subprocess.STDOUT)
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOltId,'i',oltid],stdout=FNULL, stderr=subprocess.STDOUT)
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOnuId,'i',onuid],stdout=FNULL, stderr=subprocess.STDOUT)
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlId,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlTimer,'i','0'],stdout=FNULL, stderr=subprocess.STDOUT)
+		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlRequest,'i','2'])
+		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOltId,'i',oltid])
+		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOnuId,'i',onuid])
+		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlId,'i','1'])
+		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlTimer,'i','0'])
 		ipaddr = netsnmp.snmpget(".1.3.6.1.4.1.6296.101.23.12.1.1.13."+oltid+"."+onuid+".1",Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
-		print "IP Address (after request):",ipaddr
+		print "[{}] IP: {}".format(self.oltip,ipaddr)
 		return ipaddr
 	def getMacAddressTable(self,oltid,onuid,model):
 		slotindex=1
 		portindex=1
 		macAddressTable = []
 		FNULL = open(os.devnull, 'w')
-
+		print "[{}] Mac Address Table {} {} {}".format(self.oltip,oltid,onuid,model)
 		if 'h665' not in model.lower():
-			for i in range(1,4):
-				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlRequest,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
-				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOltIndex,'i',oltid],stdout=FNULL, stderr=subprocess.STDOUT)
-				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOnuIndex,'i',onuid],stdout=FNULL, stderr=subprocess.STDOUT)
-				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlSlotIndex,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
-				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlPortIndex,'i',str(i)],stdout=FNULL, stderr=subprocess.STDOUT)
-				subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlTimer,'i','0'],stdout=FNULL, stderr=subprocess.STDOUT)
+			print "[{}] Checking all 4 ports:".format(self.oltip)
+			for i in range(1,5):
+				print "[{}] Checking {}/4:".format(self.oltip,i)
+				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlRequest,'i','1'])
+				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOltIndex,'i',oltid])
+				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOnuIndex,'i',onuid])
+				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlSlotIndex,'i','1'])
+				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlPortIndex,'i',str(i)])
+				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlTimer,'i','0'])
 			macaddr = netsnmp.snmpwalk(".1.3.6.1.4.1.6296.101.23.19.1.1.4.{}.{}.{}".format(oltid,onuid, slotindex),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
+			print "[{}] MAC: {}".format(self.oltip,macaddr)
 		else:
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlRequest,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOltIndex,'i',oltid],stdout=FNULL, stderr=subprocess.STDOUT)
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOnuIndex,'i',onuid],stdout=FNULL, stderr=subprocess.STDOUT)
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlSlotIndex,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlPortIndex,'i','1'],stdout=FNULL, stderr=subprocess.STDOUT)
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlTimer,'i','0'],stdout=FNULL, stderr=subprocess.STDOUT)
+			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlRequest,'i','1'])
+			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOltIndex,'i',oltid])
+			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOnuIndex,'i',onuid])
+			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlSlotIndex,'i','1'])
+			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlPortIndex,'i','1'])
+			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlTimer,'i','0'])
 			macaddr = netsnmp.snmpwalk(".1.3.6.1.4.1.6296.101.23.19.1.1.4.{}.{}.{}.{}".format(oltid,onuid, slotindex,portindex),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
 		for i in macaddr:
 			macAddressTable.append(prettify(i))
-
+		print "[{}] MAC: {}".format(self.oltip,macAddressTable)
 		return macAddressTable
 	def addToDatabase(self):
 		for onu in self.onuList:
