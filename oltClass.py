@@ -20,50 +20,55 @@ class olt():
 	sleGponOnuLinkUpTime='.1.3.6.1.4.1.6296.101.23.3.1.1.23'
 	sleGponOnuCurrIpAddr = '.1.3.6.1.4.1.6296.101.23.12.1.1.13'
 	mib_listprofiles ='.1.3.6.1.4.1.6296.101.23.5.1.1.1.2'
-	sleGponOnuHostControlRequest = ".1.3.6.1.4.1.6296.101.23.12.2.1.0"
-	sleGponOnuHostControlOltId =".1.3.6.1.4.1.6296.101.23.12.2.6.0"
-	sleGponOnuHostControlOnuId = ".1.3.6.1.4.1.6296.101.23.12.2.7.0"
-	sleGponOnuHostControlId = ".1.3.6.1.4.1.6296.101.23.12.2.8.0"
-	sleGponOnuHostControlTimer =".1.3.6.1.4.1.6296.101.23.12.2.3.0"
-	sleGponOnuMacControlRequest =".1.3.6.1.4.1.6296.101.23.19.2.1.0"
-	sleGponOnuMacControlOltIndex =".1.3.6.1.4.1.6296.101.23.19.2.6.0"
-	sleGponOnuMacControlOnuIndex =".1.3.6.1.4.1.6296.101.23.19.2.7.0"
-	sleGponOnuMacControlSlotIndex = ".1.3.6.1.4.1.6296.101.23.19.2.8.0"
-	sleGponOnuMacControlPortIndex = ".1.3.6.1.4.1.6296.101.23.19.2.9.0"
-	sleGponOnuMacControlTimer =".1.3.6.1.4.1.6296.101.23.19.2.3.0"
+	iso = ".1.3.6.1.4.1"
+	sleGponOnuHostControlRequest = "6296.101.23.12.2.1"
+	sleGponOnuHostControlOltId ="6296.101.23.12.2.6"
+	sleGponOnuHostControlOnuId = "6296.101.23.12.2.7"
+	sleGponOnuHostControlId = "6296.101.23.12.2.8"
+	sleGponOnuHostControlTimer ="6296.101.23.12.2.3"
+	sleGponOnuMacControlRequest ="6296.101.23.19.2.1"
+	sleGponOnuMacControlOltIndex ="6296.101.23.19.2.6"
+	sleGponOnuMacControlOnuIndex ="6296.101.23.19.2.7"
+	sleGponOnuMacControlSlotIndex = "6296.101.23.19.2.8"
+	sleGponOnuMacControlPortIndex = "6296.101.23.19.2.9"
+	sleGponOnuMacControlTimer ="6296.101.23.19.2.3"
 	onuList = []
 
 	def __init__(self,oltip,snmpCommunity):
+		self._snmp_session = netsnmp.Session(DestHost=oltip, Version = 2,Community = snmpCommunity, UseNumeric=1)
 		self.oltip = oltip
 		self.snmpCommunity = snmpCommunity
 		self.activeOlt= self.getActiveOltID() # Get active gpon interfaces
-		
+		#print self.getOnuInfo()
 
 	def getActiveOltID(self):
-		self.oltids = netsnmp.snmpwalk(self.sleGponOltId, Version=2, DestHost=self.oltip, Community=self.snmpCommunity)
-		self.onucount = netsnmp.snmpwalk(self.sleGponOltActiveOnuCount, Version=2, DestHost=self.oltip, Community=self.snmpCommunity)
+		_vars_activeOlts = netsnmp.VarList(netsnmp.Varbind(self.sleGponOltId))
+		_vars_activeOnuCount = netsnmp.VarList(netsnmp.Varbind(self.sleGponOltActiveOnuCount))
 		counter = 0
 		activeOlt = []
-		for i in range (0,len(self.oltids)):
-			if int(self.onucount[i])>0:
-				print self.oltids[i],self.onucount[i]
-				activeOlt.append(self.oltids[i])
+		OltID = self._snmp_session.walk(_vars_activeOlts)
+		ActiveOnuCount = self._snmp_session.walk(_vars_activeOnuCount)
+		for i in range (0,len(OltID)):
+			if int(ActiveOnuCount[i])>0:
+				activeOlt.append(OltID[i])
 		return activeOlt
 
 	def getOnuInfo(self,oltid=None):
 		if oltid!=None:
 			self.activeOlt = []
 			self.activeOlt.append(oltid)
+		print self.activeOlt
 		for oltid in self.activeOlt:
-			Serial = netsnmp.snmpwalk(self.sleGponOnuSerial+"."+oltid, Version=2, DestHost=self.oltip, Community=self.snmpCommunity)
-			RxPower = netsnmp.snmpwalk(self.sleGponOnuRxPower+"."+oltid, Version=2, DestHost=self.oltip, Community=self.snmpCommunity)
-			OnuID = netsnmp.snmpwalk(self.sleGponOnuID+"."+oltid, Version=2, DestHost=self.oltip, Community=self.snmpCommunity)
-			Status = netsnmp.snmpwalk(self.sleGponOnuStatus+"."+oltid,Version=2, DestHost=self.oltip, Community=self.snmpCommunity)
-			Profile = netsnmp.snmpwalk(self.sleGponOnuProfile+"."+oltid,Version=2, DestHost=self.oltip,Community=self.snmpCommunity)
-			Distance = netsnmp.snmpwalk(self.sleGponOnuDistance+"."+oltid,Version=2, DestHost=self.oltip,Community=self.snmpCommunity)
-			Model = netsnmp.snmpwalk(self.sleGponOnuModelName+"."+oltid,Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
-			
-			for i in range (0,len(Serial)):
+
+			Serial = self._snmp_session.walk (netsnmp.VarList (netsnmp.Varbind ("{}.{}".format (self.sleGponOnuSerial, oltid))))
+			RxPower = self._snmp_session.walk (netsnmp.VarList (netsnmp.Varbind ("{}.{}".format (self.sleGponOnuRxPower, oltid))))
+			OnuID = self._snmp_session.walk (netsnmp.VarList (netsnmp.Varbind ("{}.{}".format (self.sleGponOnuID, oltid))))
+			Status = self._snmp_session.walk (netsnmp.VarList (netsnmp.Varbind ("{}.{}".format (self.sleGponOnuStatus, oltid))))
+			Profile = self._snmp_session.walk (netsnmp.VarList (netsnmp.Varbind ("{}.{}".format (self.sleGponOnuProfile, oltid))))
+			Distance = self._snmp_session.walk (netsnmp.VarList (netsnmp.Varbind ("{}.{}".format (self.sleGponOnuDistance, oltid))))
+			Model = self._snmp_session.walk (netsnmp.VarList (netsnmp.Varbind ("{}.{}".format (self.sleGponOnuModelName, oltid))))
+
+			for i in range (0, len(Serial)):
 				print Serial[i], RxPower[i], OnuID[i], Status[i], Profile[i], Distance[i], Model[i], oltid
 				ipaddr = self.getIpAddress(oltid, OnuID[i], Model[i],Profile[i])
 				if not Model[i] or not Profile[i]:
@@ -98,59 +103,61 @@ class olt():
 		
 		FNULL = open(os.devnull, 'w')
 		for i in range(2,7):
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlRequest,'i','2'])
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOltId,'i',oltid])
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOnuId,'i',onuid])
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlId,'i',str(i)])
-			subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlTimer,'i','0'])
-			ipaddrRo = netsnmp.snmpget(".1.3.6.1.4.1.6296.101.23.12.1.1.13."+oltid+"."+onuid+"."+str(i),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
+			_vars = netsnmp.VarList(
+				netsnmp.Varbind(self.iso,self.sleGponOnuHostControlRequest,'2','INTEGER'),
+				netsnmp.Varbind(self.iso,self.sleGponOnuHostControlOltId,oltid,'INTEGER'),
+				netsnmp.Varbind(self.iso,self.sleGponOnuHostControlOnuId,onuid,'INTEGER'),
+				netsnmp.Varbind(self.iso,self.sleGponOnuHostControlId,str(i),'INTEGER'),
+				netsnmp.Varbind(self.iso,self.sleGponOnuHostControlTimer,'0','INTEGER')
+				)
+			print self._snmp_session.set(_vars)
+			ipaddrRo = self._snmp_session.get(".1.3.6.1.4.1.6296.101.23.12.1.1.13."+oltid+"."+onuid+"."+str(i))
 			if ipaddrRo[0] != '0.0.0.0':
-				macaddr = netsnmp.snmpget(".1.3.6.1.4.1.6296.101.23.12.1.1.10."+oltid+"."+onuid+"."+str(i),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
+				macaddr = self._snmp_session.get(".1.3.6.1.4.1.6296.101.23.12.1.1.10."+oltid+"."+onuid+"."+str(i))
 				if macaddr[0]:
 					print "[{}] ROUTER IP {} MAC {}".format(self.oltip,ipaddrRo[0],prettify(macaddr[0]))
 					return ipaddrRo[0],prettify(macaddr[0])
 				else:
 					return None, None
 	def getIpAddress(self,oltid,onuid,model,profile):
-		#ipaddr = netsnmp.snmpget(".1.3.6.1.4.1.6296.101.23.12.1.1.13."+oltid+"."+onuid+".1",Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
-		#if ipaddr[0] != '0.0.0.0' and ipaddr[0] != None:
-		#	print ipaddr, "IP Address is valid"
-		#	return ipaddr
-		FNULL = open(os.devnull, 'w') # Don't print output from snmpset
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlRequest,'i','2'])
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOltId,'i',oltid])
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlOnuId,'i',onuid])
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlId,'i','1'])
-		subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuHostControlTimer,'i','0'])
-		ipaddr = netsnmp.snmpget(".1.3.6.1.4.1.6296.101.23.12.1.1.13."+oltid+"."+onuid+".1",Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
+		_oid_getIpAddress = netsnmp.VarList(netsnmp.Varbind(".1.3.6.1.4.1.6296.101.23.12.1.1.13.{}.{}.1".format(oltid, onuid)))
+		_vars = netsnmp.VarList(
+			netsnmp.Varbind(self.iso,self.sleGponOnuHostControlRequest, '2', 'INTEGER'),
+			netsnmp.Varbind(self.iso,self.sleGponOnuHostControlOltId, oltid, 'INTEGER'),
+			netsnmp.Varbind(self.iso,self.sleGponOnuHostControlOnuId, onuid, 'INTEGER'),
+			netsnmp.Varbind(self.iso,self.sleGponOnuHostControlId, '1', 'INTEGER'),
+			netsnmp.Varbind(self.iso,self.sleGponOnuHostControlTimer, '0', 'INTEGER'))
+
+		print self._snmp_session.set(_vars)
+		ipaddr = self._snmp_session.get(_oid_getIpAddress)
 		print "[{}] IP: {}".format(self.oltip,ipaddr)
 		return ipaddr
 	def getMacAddressTable(self,oltid,onuid,model):
 		slotindex=1
 		portindex=1
 		macAddressTable = []
-		FNULL = open(os.devnull, 'w')
 		print "[{}] Mac Address Table {} {} {}".format(self.oltip,oltid,onuid,model)
+		portCount = 1
 		if 'h665' not in model.lower():
+			portCount = 4
 			print "[{}] Checking all 4 ports:".format(self.oltip)
-			for i in range(1,5):
-				print "[{}] Checking {}/4:".format(self.oltip,i)
-				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlRequest,'i','1'])
-				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOltIndex,'i',oltid])
-				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOnuIndex,'i',onuid])
-				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlSlotIndex,'i','1'])
-				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlPortIndex,'i',str(i)])
-				print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlTimer,'i','0'])
-			macaddr = netsnmp.snmpwalk(".1.3.6.1.4.1.6296.101.23.19.1.1.4.{}.{}.{}".format(oltid,onuid, slotindex),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
-			print "[{}] MAC: {}".format(self.oltip,macaddr)
 		else:
-			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlRequest,'i','1'])
-			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOltIndex,'i',oltid])
-			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlOnuIndex,'i',onuid])
-			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlSlotIndex,'i','1'])
-			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlPortIndex,'i','1'])
-			print subprocess.call(['snmpset','-v2c','-c',self.snmpCommunity,self.oltip,self.sleGponOnuMacControlTimer,'i','0'])
-			macaddr = netsnmp.snmpwalk(".1.3.6.1.4.1.6296.101.23.19.1.1.4.{}.{}.{}.{}".format(oltid,onuid, slotindex,portindex),Version=2,DestHost=self.oltip,Community=self.snmpCommunity)
+			portCount = 1
+		print type(portCount)
+		for i in range(1, portCount+1):
+			print "[{}] Checking {} of {}:".format(self.oltip,i,portCount)
+			print type(portCount)
+			_vars = netsnmp.VarList(
+				netsnmp.Varbind(self.iso,self.sleGponOnuMacControlRequest,'1','INTEGER'),
+				netsnmp.Varbind(self.iso,self.sleGponOnuMacControlOltIndex, oltid,'INTEGER'),
+				netsnmp.Varbind(self.iso,self.sleGponOnuMacControlOnuIndex, onuid,'INTEGER'),
+				netsnmp.Varbind(self.iso,self.sleGponOnuMacControlSlotIndex,'1','INTEGER'),
+				netsnmp.Varbind(self.iso,self.sleGponOnuMacControlPortIndex,str(i),'INTEGER'),
+				netsnmp.Varbind(self.iso,self.sleGponOnuMacControlTimer,'0','INTEGER')
+				)
+			print self._snmp_session.set(_vars)
+		_vars_checkMacAddressTable = netsnmp.VarList(netsnmp.Varbind(".1.3.6.1.4.1.6296.101.23.19.1.1.4.{}.{}.{}".format(oltid,onuid, slotindex)))
+		macaddr = self._snmp_session.walk(_vars_checkMacAddressTable)
 		for i in macaddr:
 			macAddressTable.append(prettify(i))
 		print "[{}] MAC: {}".format(self.oltip,macAddressTable)
