@@ -1,8 +1,11 @@
 import netsnmp,os,subprocess
 from database import databaseInterface
+import time
 def prettify(mac_string):
     return ':'.join('%02x' % ord(b) for b in mac_string)
 dbase = databaseInterface('localhost','root','','gpon')
+_updateCounter=0
+_newOnuCounter=0
 class olt():
 	global dbase
 	sleGponOnuID='.1.3.6.1.4.1.6296.101.23.3.1.1.1'#
@@ -35,7 +38,7 @@ class olt():
 	onuList = []
 
 	def __init__(self,oltip,snmpCommunity):
-		self._snmp_session = netsnmp.Session(DestHost=oltip, Version = 2,Community = snmpCommunity, UseNumeric=1)
+		self._snmp_session = netsnmp.Session(DestHost=oltip, Version = 2,Community = snmpCommunity, UseNumeric=1, Timeout=5000000)
 		self.oltip = oltip
 		self.snmpCommunity = snmpCommunity
 		self.activeOlt= self.getActiveOltID()
@@ -64,19 +67,22 @@ class olt():
 			for i in range (0, len(Serial)):
 				print Serial[i], RxPower[i], OnuID[i], Status[i], Profile[i], Distance[i], Model[i], oltid
 				ipaddr = self.getIpAddress(oltid, OnuID[i], Model[i],Profile[i])
-
+				time.sleep(1)
 				if not Model[i] or not Profile[i]:
 					continue
 
 				if 'h665' not in Model[i].lower() and "bridge" not in Profile[i].lower() and "KISSJAMES" not in Profile[i]:
+
 					try:
 						ipAddrRo,macAddress = self.getRouterAddress(oltid,OnuID[i])
 						macAddressTable=[macAddress]
+						time.sleep(1)
 					except TypeError:
 						macAddressTable=[]
 					
 				else:
 					macAddressTable = self.getMacAddressTable(oltid,OnuID[i],Model[i])
+					time.sleep(1)
 
 				try:
 					self.onuList.append({
@@ -126,6 +132,7 @@ class olt():
 		else:
 			portCount = 1
 		print "[{}] Mac UPDATE | OLTID: {}  ONUID: {} PortCount: {} Status: {}".format(self.oltip,oltid,onuid,portCount,self.updateOnuMacAddressTable(oltid,onuid,portCount))
+		time.sleep(1)
 		macaddr = self._snmp_session.walk(_vars_checkMacAddressTable)
 		for i in macaddr:
 			macAddressTable.append(prettify(i))
@@ -176,6 +183,8 @@ class olt():
 		return dbase.getOne("SELECT * from onuMacs where mac='{}';".format(mac))
 
 	def updateDatabase_ONU(self,onu):
+		global _updateCounter
+		_updateCounter+=1
 		if onu['ipaddr'][0]!='0.0.0.0' and onu['ipaddr'][0]!=None:
 			print "UPDATE LONG",onu['ipaddr'][0],onu['rxpower'],onu['status'],onu['distance'],onu['profile'], onu['model'],onu['oltid'],onu['onuid'],onu['oltip'],onu['serial']
 			dbase.execute("""UPDATE onuList set ip='{}',rx='{}', status='{}', distance='{}', profile='{}', model='{}', oltid='{}', onuid='{}', oltip='{}' where serial='{}'""".format(onu['ipaddr'][0],onu['rxpower'],onu['status'],onu['distance'],onu['profile'], onu['model'],onu['oltid'],onu['onuid'],onu['oltip'],onu['serial']))
@@ -187,6 +196,8 @@ class olt():
 		return dbase.getAll("SELECT id from onuList where serial='{}'".format(serial))
 
 	def addOnuToDatabase(self,onu):
+		global _newOnuCounter
+		_newOnuCounter+=1
 		print onu['ipaddr'][0],onu['rxpower'],onu['status'],onu['distance'],onu['profile'],onu['model'],onu['serial'],onu['oltid'],onu['onuid'],onu['oltip']
 		dbase.execute("""INSERT INTO onuList (ip,rx,status,distance,profile,model, serial,oltid, onuid,oltip) values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')""".format(onu['ipaddr'][0],onu['rxpower'],onu['status'],onu['distance'],onu['profile'],onu['model'],onu['serial'],onu['oltid'],onu['onuid'],onu['oltip']))
 

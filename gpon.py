@@ -1,5 +1,6 @@
 from oltClass import olt
 from onuClass import onu
+from oltClass import _updateCounter, _newOnuCounter
 from database import databaseInterface
 from multiprocessing.pool import ThreadPool
 
@@ -31,7 +32,8 @@ if __name__ == '__main__':
 	olt4.addToDatabase()
 	olt6.addToDatabase()
 	olt7.addToDatabase()
-
+	print "NEW ONU:",_newOnuCounter
+	print "UPDATED ONU:",_updateCounter
 #if __name__=='__main__':
 #	olt1 = olt('192.168.230.106','t0p$3cr37')
 #	#olt1.getOnuInfo()
