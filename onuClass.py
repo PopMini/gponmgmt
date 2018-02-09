@@ -1,7 +1,9 @@
 import netsnmp 
 from dasanOids import *
-from database import databaseInterface
-dbase = databaseInterface('localhost','root','','gpon')
+from database import databaseGpon
+from termcolor import colored
+import time
+dbase = databaseGpon('localhost','root','','gpon')
 def prettify(mac_string):
     return ':'.join('%02x' % ord(b) for b in mac_string)
 
@@ -29,7 +31,7 @@ class onu:
 		self.__createSNMPVars()
 		self.getIpAddress()
 		self.getMacAddressTable()
-		print self.ipaddr
+		#print self.ipaddr
 	def getCurrentIPAddress(self):
 		pass
 	def getCurrentStatus(self):
@@ -42,7 +44,7 @@ class onu:
 			self.getRouterAddress()
 		else:	
 			self.getMacs()
-		print self.macAddressTable
+		self.printData('macaddrtable')
 
 	def __createSNMPVars(self):
 		self._vars_checkMacAddressTable = netsnmp.VarList(netsnmp.Varbind(".1.3.6.1.4.1.6296.101.23.19.1.1.4.{}.{}.{}".format(self.OLTinterface,self.ONUid, '1')))
@@ -55,13 +57,17 @@ class onu:
 			portCount = 4
 		else:
 			portCount = 1
+
 		self.updateOnuMacAddressTable(portCount)
 		macaddr = self._snmp_session.walk(self._vars_checkMacAddressTable)
+		print self.ONUProfile,self.ONUModel
 		[self.macAddressTable.append(prettify(x)) for x in macaddr]
+		
 
 	def getRouterAddress(self):
 		for i in range(2,7):
 			UpdateResult = self.updateOnuIpHost(i)
+		self.macAddrUpdateStatus = UpdateResult
 		ipaddrRo = self._snmp_session.walk(self._vars_CurrentIP)
 		macaddr = self._snmp_session.walk(self._vars_ipMacs)
 		macAddressTable=[]
@@ -71,10 +77,18 @@ class onu:
 			if mgmtAddressPrefix not in ipaddrRo[x] and ipaddrRo[x] != '0.0.0.0': 
 				self.macAddressTable.append(macAddressTable[x])
 
-	def printData(self):
+	def printData(self,extra=None):
 		print "[{}] GPON {} / {} SN:{} Status:{} M:{} P:{} RX:{}".format(self.OLTIP,self.OLTinterface,self.ONUid,self.ONUSerial,self.ONUStatus,self.ONUModel,self.ONUProfile,self.ONURX)
+		if extra==None:
+			pass
+		elif extra=="macaddrtable":
+			if self.macAddrUpdateStatus == 'Failure':
+				print colored(self.macAddrUpdateStatus,'red')
+			else:
+				print colored(self.macAddressTable,'green')
 
 	def updateOnuIpHost(self,controlid):
+		time.sleep(1)
 		_vars = netsnmp.VarList(
 			netsnmp.Varbind(iso,sleGponOnuHostControlRequest, '2','INTEGER'),
 			netsnmp.Varbind(iso,sleGponOnuHostControlOltId, self.OLTinterface,'INTEGER'),
@@ -83,6 +97,7 @@ class onu:
 			netsnmp.Varbind(iso,sleGponOnuHostControlTimer, '0','INTEGER')
 			)
 		status = self._snmp_session.set(_vars)
+		time.sleep(0.5)
 		if status == 1:
 			result = "Success"
 		else:
@@ -96,6 +111,7 @@ class onu:
 
 	def updateOnuMacAddressTable(self,portCount):
 		status = "Failure"
+		time.sleep(1)
 		for i in range(1,portCount+1):
 			_vars_UpdateMacAddressTable = netsnmp.VarList(
 				netsnmp.Varbind(iso,sleGponOnuMacControlRequest,'1','INTEGER'),
@@ -107,7 +123,8 @@ class onu:
 				)
 			if self._snmp_session.set(_vars_UpdateMacAddressTable) == 1:
 				status = "Success"
+		time.sleep(0.5)
+		self.macAddrUpdateStatus = status
 		return status
-
 	def addToDatabase(self):
 		dbase.addOnuToDB(self)

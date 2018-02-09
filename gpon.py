@@ -42,4 +42,4 @@ if __name__ == '__main__':
 
 	for i in onu.onulist:
 		i.addToDatabase()
-		print "xxxxxxxxxxxxxxx"
+	
