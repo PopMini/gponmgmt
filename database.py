@@ -2,8 +2,8 @@ import MySQLdb
 
 class databaseInterface():
 	def __init__(self,ip,user,password,db):
-		sqldb = MySQLdb.connect(ip,user,password,db)
-		self.cursor = sqldb.cursor(MySQLdb.cursors.DictCursor)
+		self.sqldb = MySQLdb.connect(ip,user,password,db)
+		self.cursor = self.sqldb.cursor(MySQLdb.cursors.DictCursor)
 	def getAll(self,query):
 		self.cursor.execute(query)
 		output = self.cursor.fetchall()
@@ -13,10 +13,10 @@ class databaseInterface():
 		output = self.cursor.fetchone()
 		return output	
 	def closeDB(self):
-		sqldb.close()
+		self.sqldb.close()
 	def execute(self,query):
 		self.cursor.execute(query)
-		sqldb.commit()
+		self.sqldb.commit()
 		pass
 
 
@@ -34,13 +34,13 @@ class databaseGpon(databaseInterface):
 		return dbase.getOne("SELECT * from onuMacs where mac='{}';".format(mac))
 
 	def updateDatabase_ONU(self,onu):
-		if onu.ipaddr!='0.0.0.0' and self.onu!=None:
-			print "UPDATE LONG",onu.ipaddr,onu.ONURX,onu.ONUSerial,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial
+		if onu.ipaddr!='0.0.0.0' and onu.ipaddr!=None:
+			print "UPDATE LONG",onu.ipaddr,onu.ONURX,onu.ONUStatus,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial
 			dbase.execute("""UPDATE onuList set ip='{}',rx='{}', status='{}', distance='{}', profile='{}', model='{}', oltid='{}', onuid='{}', oltip='{}' 
 				where serial='{}'
-				""".format(onu.ipaddr,onu.ONURX,onu.ONUSerial,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial))
+				""".format(onu.ipaddr,onu.ONURX,onu.ONUStatus,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial))
 		else:
-			print "UPDATE SHORT",onu.ONURX,onu.ONUSerial,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial
+			print "UPDATE SHORT",onu.ONURX,onu.ONUStatus,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial
 			dbase.execute("""UPDATE onuList set rx='{}', status='{}', distance='{}', profile='{}', model='{}', oltid='{}', onuid='{}', oltip='{}' 
 				where serial='{}'
 				""".format(onu.ONURX,onu.ONUSerial,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial))
@@ -49,8 +49,6 @@ class databaseGpon(databaseInterface):
 		return dbase.getAll("SELECT id from onuList where serial='{}'".format(onu.ONUSerial))
 
 	def addOnuToDatabase(self,onu):
-		global _newOnuCounter
-		_newOnuCounter+=1
 		dbase.execute("""INSERT INTO onuList (ip,rx,status,distance,profile,model, serial,oltid, onuid,oltip) 
 			values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')
 			""".format(onu.ipaddr,onu.ONURX,onu.ONUSerial,onu.ONUDistance,onu.ONUProfile,onu.ONUModel,onu.ONUSerial,onu.OLTinterface,onu.ONUid,onu.OLTIP))
@@ -71,5 +69,5 @@ class databaseGpon(databaseInterface):
 			if _mac:
 				self.updateLastSeen(_mac['id'])
 			else:
-				self.addMacAddress(id, mac)
+				self.addMacAddress(onu, mac)
 dbase = databaseGpon('localhost','root','','gpon')
