@@ -1,5 +1,6 @@
 import netsnmp,os,subprocess
 from database import databaseGpon
+from dasanOids import databaseVars
 import time
 import os
 from onuClass import *
@@ -23,7 +24,7 @@ class olt():
 		self.snmpCommunity = snmpCommunity
 		#print self._snmp_session 
 		self.activeOlt= self.getActiveOltID()
-		self.dbase = databaseGpon('localhost','root','','gpon')
+		self.dbase = databaseGpon(databaseVars['address'],databaseVars['user'],databaseVars['password'],databaseVars['database'])
 		print self.activeOlt
 
 	def getActiveOltID(self):
