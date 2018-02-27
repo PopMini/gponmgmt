@@ -1,5 +1,6 @@
 import netsnmp 
 from dasanOids import *
+from settings import *
 #from database import databaseGpon
 from termcolor import colored
 import time

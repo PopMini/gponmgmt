@@ -4,6 +4,7 @@ from dasanOids import databaseVars
 import time
 import os
 from onuClass import *
+from settings import *
 from dasanOids import *
 def prettify(mac_string):
     return ':'.join('%02x' % ord(b) for b in mac_string)
