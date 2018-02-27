@@ -93,7 +93,7 @@ venv.bak/
 # Spyder project settings
 .spyderproject
 .spyproject
-database.py
+dasanOids.py
 
 # Rope project settings
 .ropeproject

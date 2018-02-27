@@ -29,4 +29,4 @@ sleGponOnuHostCurrentIp=".1.3.6.1.4.1.6296.101.23.12.1.1.13"
 bridgeProfiles = ['bridge','kissjames','h665','bri']
 sleGponOnuMacTable = ".1.3.6.1.4.1.6296.101.23.12.1.1.10"
 mgmtAddressPrefix = "10.99."
-databaseVars={'address':'localhost','user':'root','database':'gpon','password':'secret'}
+databaseVars={'address':'localhost','user':'root','database':'gpon','password':'Labirynth1'}
