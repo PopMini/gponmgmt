@@ -6,14 +6,14 @@ from onuClass import *
 from dasanOids import *
 def prettify(mac_string):
     return ':'.join('%02x' % ord(b) for b in mac_string)
-dbase = databaseGpon('localhost','root','','gpon')
+
 _updateCounter=0
 _newOnuCounter=0
 
 
 
 class olt():
-	global dbase
+	#global self.dbase
 
 	onuList = []
 
@@ -23,6 +23,7 @@ class olt():
 		self.snmpCommunity = snmpCommunity
 		#print self._snmp_session 
 		self.activeOlt= self.getActiveOltID()
+		self.dbase = databaseGpon('localhost','root','','gpon')
 		print self.activeOlt
 
 	def getActiveOltID(self):
@@ -43,10 +44,17 @@ class olt():
 			self.activeOlt.append(oltid)
 
 		for oltid in self.activeOlt:
-			time.sleep(1)
+			#time.sleep(1)
 			Serial, RxPower, OnuID, Status, Profile, Distance, Model = self.getBasicData(oltid)
-			[onu(self.oltip, oltid, OnuID[i],Profile[i],Model[i],RxPower[i],Distance[i],Status[i],Serial[i],self._snmp_session) for i in range(0,len(Serial))]
-
+			#[onu(self.oltip, oltid, OnuID[i],Profile[i],Model[i],RxPower[i],Distance[i],Status[i],Serial[i],self._snmp_session) for i in range(0,len(Serial))]
+			for i in xrange(0,len(Serial)):
+				if onu.onulist.search(Serial[i]):
+					onu.onulist.search(Serial[i]).updateData()
+					onu.onulist.search(Serial[i]).addToDatabase()
+				else:
+					x=onu(self.oltip, oltid, OnuID[i],Profile[i],Model[i],RxPower[i],Distance[i],Status[i],Serial[i],self._snmp_session,self.dbase)
+					x.addToDatabase()
+		#self.dbase.closeDB()
 
 
 	def getBasicData(self,oltid):
@@ -58,3 +66,14 @@ class olt():
 		Distance = self._snmp_session.walk (netsnmp.VarList (netsnmp.Varbind ("{}.{}".format (sleGponOnuDistance, oltid))))
 		Model = self._snmp_session.walk (netsnmp.VarList (netsnmp.Varbind ("{}.{}".format (sleGponOnuModelName, oltid))))
 		return Serial, RxPower, OnuID, Status, Profile, Distance, Model
+
+	def updateBasicData(self):
+		for i in self.activeOlt:
+			Serial, RxPower, OnuID, Status, Profile, Distance, Model = self.getBasicData(i)
+			for y in xrange(0,len(Serial)):
+				if onu.onulist.search(Serial[y]):
+					onu.onulist.search(Serial[y]).ONURX=RxPower[y]
+					onu.onulist.search(Serial[y]).ONUStatus="10"
+					onu.onulist.search(Serial[y]).ONUDistance = Distance[y]
+					onu.onulist.search(Serial[y]).ONUProfile = Profile[y]
+					onu.onulist.search(Serial[y]).addToDatabase()
