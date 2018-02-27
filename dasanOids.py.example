@@ -1,0 +1,35 @@
+#OID's that you'll need from Dasan. They are asking people not to share them.
+#Just copy OID number and it should be working. 
+
+# Whole OID with .1.3.6.1.4.1.
+sleGponOnuID=''
+sleGponOnuSerial=''
+sleGponOnuStatus=''
+sleGponOnuRxPower=''
+sleGponOnuProfile= ''
+sleGponOnuDistance= ''
+sleGponOnuModelName= ''
+sleGponOltId= '' 
+sleGponOltActiveOnuCount=""
+sleGponOnuHostOnuId=""
+sleGponOnuHostId = ''
+sleGponOnuHostIpAddr=''
+sleGponOnuLinkUpTime=''
+sleGponOnuCurrIpAddr = ''
+mib_listprofiles =''
+sleGponOnuHostCurrentIp=""
+sleGponOnuMacTable = ""
+
+#OID without .1.3.6.1.4.1. at beginning
+
+sleGponOnuHostControlRequest = ""
+sleGponOnuHostControlOltId =""
+sleGponOnuHostControlOnuId = ""
+sleGponOnuHostControlId = ""
+sleGponOnuHostControlTimer =""
+sleGponOnuMacControlRequest =""
+sleGponOnuMacControlOltIndex =""
+sleGponOnuMacControlOnuIndex =""
+sleGponOnuMacControlSlotIndex = ""
+sleGponOnuMacControlPortIndex = ""
+sleGponOnuMacControlTimer =""
