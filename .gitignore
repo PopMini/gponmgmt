@@ -55,7 +55,7 @@ coverage.xml
 # Django stuff:
 *.log
 local_settings.py
-
+dasanOids.py
 # Flask stuff:
 instance/
 .webassets-cache
@@ -93,7 +93,7 @@ venv.bak/
 # Spyder project settings
 .spyderproject
 .spyproject
-dasanOids.py
+
 
 # Rope project settings
 .ropeproject
