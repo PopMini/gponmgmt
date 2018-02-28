@@ -16,7 +16,7 @@ class onuList(list):
 class onu:
 	onulist = onuList()
 	#global self.dbase
-	def __init__(self,OLTip, OLTinterface, ONUid, ONUProfile, ONUModel, ONURX, ONUDistance, ONUStatus,ONUSerial,_snmp_session,dbase):
+	def __init__(self,OLTip, OLTinterface, ONUid, ONUProfile, ONUModel, ONURX, ONUDistance, ONUStatus,ONUSerial,_snmp_session,dbase,ONUUptime):
 		self.dbase=dbase
 		self.OLTIP=OLTip
 		self.OLTinterface=OLTinterface
@@ -27,6 +27,10 @@ class onu:
 		self.ONUDistance=ONUDistance
 		self.ONUStatus=ONUStatus
 		self.ONUSerial=ONUSerial
+		self.ONUUptime = 0
+		if ONUUptime:
+			self.ONUUptime = ONUUptime
+		print self.ONUUptime
 		self.onulist.append(self)
 		self.__getPortCount()
 		self._snmp_session=_snmp_session
@@ -34,6 +38,8 @@ class onu:
 		self.__createSNMPVars()
 		self.getIpAddress()
 		self.getMacAddressTable()
+		
+		
 		#print self.ipaddr
 	def getCurrentIPAddress(self):
 		pass

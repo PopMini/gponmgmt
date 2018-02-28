@@ -36,22 +36,22 @@ class databaseGpon(databaseInterface):
 	def updateDatabase_ONU(self,onu):
 		if onu.ipaddr!='0.0.0.0' and onu.ipaddr!=None:
 			#print "UPDATE LONG",onu.ipaddr,onu.ONURX,onu.ONUStatus,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial
-			self.execute("""UPDATE onuList set ip='{}',rx='{}', status='{}', distance='{}', profile='{}', model='{}', oltid='{}', onuid='{}', oltip='{}' 
+			self.execute("""UPDATE onuList set ip='{}',rx='{}', status='{}', distance='{}', profile='{}', model='{}', oltid='{}', onuid='{}', oltip='{}', uptime='{}' 
 				where serial='{}'
-				""".format(onu.ipaddr,onu.ONURX,onu.ONUStatus,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial))
+				""".format(onu.ipaddr,onu.ONURX,onu.ONUStatus,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUUptime,onu.ONUSerial))
 		else:
 			#print "UPDATE SHORT",onu.ONURX,onu.ONUStatus,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial
-			self.execute("""UPDATE onuList set rx='{}', status='{}', distance='{}', profile='{}', model='{}', oltid='{}', onuid='{}', oltip='{}' 
+			self.execute("""UPDATE onuList set rx='{}', status='{}', distance='{}', profile='{}', model='{}', oltid='{}', onuid='{}', oltip='{}', uptime='{}' 
 				where serial='{}'
-				""".format(onu.ONURX,onu.ONUSerial,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUSerial))
+				""".format(onu.ONURX,onu.ONUStatus,onu.ONUDistance,onu.ONUProfile, onu.ONUModel,onu.OLTinterface,onu.ONUid,onu.OLTIP, onu.ONUUptime,onu.ONUSerial))
 
 	def checkIfONUExists(self,onu):
 		return self.getOne("SELECT id from onuList where serial='{}'".format(onu.ONUSerial))
 
 	def addOnuToDatabase(self,onu):
-		self.execute("""INSERT INTO onuList (ip,rx,status,distance,profile,model, serial,oltid, onuid,oltip) 
-			values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')
-			""".format(onu.ipaddr,onu.ONURX,onu.ONUStatus,onu.ONUDistance,onu.ONUProfile,onu.ONUModel,onu.ONUSerial,onu.OLTinterface,onu.ONUid,onu.OLTIP))
+		self.execute("""INSERT INTO onuList (ip,rx,status,distance,profile,model, serial,oltid, onuid,oltip,uptime) 
+			values ('{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}')
+			""".format(onu.ipaddr,onu.ONURX,onu.ONUStatus,onu.ONUDistance,onu.ONUProfile,onu.ONUModel,onu.ONUSerial,onu.OLTinterface,onu.ONUid,onu.OLTIP,onu.ONUUptime))
 
 	def addToDatabase(self,onu):
 		id = self.checkIfONUExists(onu)
