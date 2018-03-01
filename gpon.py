@@ -7,13 +7,12 @@ import os
 
 if __name__ == '__main__':
 	print "START"
-	olt1 = olt('192.168.230.106','set@moico@iusa')
-	olt2 = olt('192.168.60.200','set@moico@iusa')
-	olt4 = olt('192.168.97.50','set@moico@iusa') 
-	olt3 = olt('192.168.35.23','set@moico@iusa')
-	olt5 = olt('188.121.31.122','set@moico@iusa')
-	olt6 = olt('10.99.10.1','set@moico@iusa')
-	olt7 = olt('192.186.94.41','set@moico@iusa')
+-	olt1 = olt('192.168.230.106','t0p$3cr37')
+-	olt2 = olt('192.168.60.200','t0p$3cr37')
+-	olt4 = olt('192.168.97.50','t0p$3cr37')
+-	olt3 = olt('192.168.35.23','t0p$3cr37')
+-	olt5 = olt('10.99.8.1','t0p$3cr37')
+-	olt6 = olt('10.99.10.1','t0p$3cr37')
 	#olts = [olt1,olt2,olt3, olt4, olt5,olt6]
 	#olt1.getOnuInfo()
 	#olt2.getOnuInfo()

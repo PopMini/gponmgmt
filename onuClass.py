@@ -30,7 +30,7 @@ class onu:
 		self.ONUUptime = 0
 		if ONUUptime:
 			self.ONUUptime = ONUUptime
-		print self.ONUUptime
+
 		self.onulist.append(self)
 		self.__getPortCount()
 		self._snmp_session=_snmp_session

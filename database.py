@@ -2,6 +2,7 @@ import MySQLdb
 
 class databaseInterface():
 	def __init__(self,ip,user,password,db):
+		print ip,user,password,db
 		self.sqldb = MySQLdb.connect(ip,user,password,db)
 		self.cursor = self.sqldb.cursor(MySQLdb.cursors.DictCursor)
 	def getAll(self,query):
